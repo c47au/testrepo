@@ -1,0 +1,62 @@
+import pandas as pd
+from datetime import datetime
+import glob
+
+tmp = 'temp.tmp'
+log = 'log.txt'
+targetfile = 'file_out.csv'
+
+#Extract function
+def extract_from_json(file_to_process):
+  data_extract = pd.read_json(file_to_process)
+  return data_extract
+
+def extract():
+  extract_data = pd.DataFrame(columns=['Name','Market Cap (US$ Billion)'])
+  for jsonfile in glob.glob('*.json'):
+    extract_data = extract_data.append(extract_from_json(jsonfile), ignore_index=True)
+  return extract_data
+
+ech = pd.read_csv('exchange_rates.csv')
+stering = ech.loc[9,'Rates']
+
+
+#Transform function
+def transform(data):
+  data['Market Cap (US$ Billion)'] = round(data['Market Cap (US$ Billion)']*stering, 3)
+  data_transform = data.rename(columns={'Market Cap (US$ Billion)':'Market Cap (GBP Billion)'})
+  return data_transform
+
+#Load function
+def load(targetfile,data_to_load):
+    data_to_load.to_csv(targetfile)
+
+
+
+#logging system
+def log(message):
+  format = '%Y-%h-%d-%H-%M-%S'
+  now = datetime.now()
+  t = now.strftime(format)
+  with open('log','a') as f:
+    f.write(t+ ',' + message + '\n')
+ 
+
+#use of function
+log('extract data')
+
+log('transform phase stared')
+extracted = extract()
+log('transform phase ended')
+print(extracted.head(5),'\n'*5) 
+
+log('transform data')
+log('transform phase started')
+transform_data = transform(extracted)
+log('transform phase ended')
+print(transform_data)
+
+log('load data')
+log('load phase started')
+load(targetfile,transform_data)
+log('load phase ended')
